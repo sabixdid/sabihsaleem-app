@@ -4,7 +4,9 @@ import withPWA from "next-pwa";
 const nextConfig: NextConfig = {
   reactCompiler: true,
 
-  // Force Webpack so next-pwa works under Next 16
+  // Disable Turbopack so Webpack runs on Vercel
+  turbopack: {},
+
   webpack: (config) => {
     return config;
   },
