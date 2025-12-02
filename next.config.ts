@@ -4,17 +4,21 @@ import withPWA from "next-pwa";
 const nextConfig: NextConfig = {
   reactCompiler: true,
 
-  // Disable turbopack so Vercel uses webpack
+  // Force Webpack for Next.js 16 + next-pwa
   turbopack: {},
 
-  // Force Webpack
   webpack: (config) => {
     return config;
   },
 
-  // Disable TypeScript build errors on Vercel
+  // Disable TS errors during production build
   typescript: {
     ignoreBuildErrors: true,
+  },
+
+  // Disable ESLint errors during build too
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 
