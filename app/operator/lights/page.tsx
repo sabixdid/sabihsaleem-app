@@ -3,27 +3,21 @@
 import { useEffect, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 
-export default function Home() {
+export default function OperatorLights() {
   const [devices, setDevices] = useState<any[]>([]);
   const [brightness, setBrightness] = useState<Record<string, number>>({});
   const [colors, setColors] = useState<Record<string, string>>({});
 
-  // Skip fake or unsupported "Group" devices
   function isControllable(dev: any) {
     const bad = ["SameModeGroup", "BaseGroup", "Group", "Bulbs others"];
     return !bad.includes(dev.sku) && !bad.includes(dev.deviceName);
   }
 
-  // Smart model resolver (works in production)
   function getModel(dev: any) {
-    // H6004, H6159, H705A, etc. (real model codes)
     if (dev.sku && /^H\d+/.test(dev.sku)) return dev.sku;
-
-    // Some devices put model under "type" or "meta"
     if (dev.model) return dev.model;
     if (dev.type?.includes("light")) return dev.sku;
-
-    return dev.sku; // fallback
+    return dev.sku;
   }
 
   useEffect(() => {
@@ -55,7 +49,6 @@ export default function Home() {
     });
   }
 
-  // Debounce control signals
   let debounceBrightness: NodeJS.Timeout;
   let debounceColor: NodeJS.Timeout;
 
@@ -84,7 +77,6 @@ export default function Home() {
     }, 120);
   }
 
-  // SABITX presets
   const presets: Record<string, string> = {
     OperatorWhite: "#ffffff",
     SabitxRed: "#ff2a2a",
@@ -97,7 +89,7 @@ export default function Home() {
 
   return (
     <div className="px-4 py-6 text-white bg-black min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">SABITX Operator</h1>
+      <h1 className="text-2xl font-bold mb-4">Operator • Lights</h1>
 
       <div className="space-y-6 pb-20">
         {devices.map((dev) => {
@@ -109,7 +101,6 @@ export default function Home() {
               <p className="text-sm text-zinc-400">Model: {model}</p>
               <p className="text-xs text-zinc-500 break-all mb-2">{dev.device}</p>
 
-              {/* ON/OFF */}
               <div className="flex gap-2 mb-3">
                 <button
                   onClick={() =>
@@ -122,7 +113,6 @@ export default function Home() {
                 >
                   ON
                 </button>
-
                 <button
                   onClick={() =>
                     sendCommand(dev.device, model, {
@@ -136,7 +126,6 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* PRESETS */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {Object.entries(presets).map(([name, hex]) => (
                   <button
@@ -151,7 +140,6 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* BRIGHTNESS */}
               <div className="mt-2 mb-4">
                 <input
                   type="range"
@@ -170,7 +158,6 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* COLOR PICKER */}
               <div className="mt-4">
                 <HexColorPicker
                   color={colors[dev.device]}
