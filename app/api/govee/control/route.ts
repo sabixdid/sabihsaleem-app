@@ -23,22 +23,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const res = await fetch(
-      "https://openapi.api.govee.com/router/api/v1/device/control",
-      {
-        method: "POST",
-        headers: {
-          "Govee-API-Key": process.env.GOVEE_API_KEY!,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ device, model, cmd }),
-      }
-    );
+    // NEW GOVEE API (REQUIRED)
+    const url = "https://developer-api.govee.com/v1/devices/control";
+
+    const payload = {
+      device,
+      model,
+      cmd
+    };
+
+    console.log("SENDING TO GOVEE:", payload);
+
+    const res = await fetch(url, {
+      method: "PUT", // REQUIRED BY NEW GOVEE API
+      headers: {
+        "Govee-API-Key": process.env.GOVEE_API_KEY!,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
 
     const text = await res.text();
     console.log("GOVEE RAW RESPONSE:", text);
 
-    // Try parsing JSON
+    // Govee sometimes returns empty body → handle that
+    if (!text || text.trim() === "") {
+      console.error("ERROR: Empty response from Govee");
+      return NextResponse.json(
+        { error: "Empty response from Govee" },
+        { status: 502 }
+      );
+    }
+
     try {
       const data = JSON.parse(text);
       return NextResponse.json(data, { status: res.status });
