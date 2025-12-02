@@ -1,192 +1,117 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { HexColorPicker } from "react-colorful";
+import Link from "next/link";
 
 export default function Home() {
-  const [devices, setDevices] = useState<any[]>([]);
-  const [brightness, setBrightness] = useState<Record<string, number>>({});
-  const [colors, setColors] = useState<Record<string, string>>({});
-
-  // Skip fake or unsupported "Group" devices
-  function isControllable(dev: any) {
-    const bad = ["SameModeGroup", "BaseGroup", "Group", "Bulbs others"];
-    return !bad.includes(dev.sku) && !bad.includes(dev.deviceName);
-  }
-
-  // Smart model resolver (works in production)
-  function getModel(dev: any) {
-    // H6004, H6159, H705A, etc. (real model codes)
-    if (dev.sku && /^H\d+/.test(dev.sku)) return dev.sku;
-
-    // Some devices put model under "type" or "meta"
-    if (dev.model) return dev.model;
-    if (dev.type?.includes("light")) return dev.sku;
-
-    return dev.sku; // fallback
-  }
-
-  useEffect(() => {
-    fetch("/api/govee/devices")
-      .then((r) => r.json())
-      .then((d) => {
-        const arr = (d.data || []).filter(isControllable);
-
-        setDevices(arr);
-
-        const b: Record<string, number> = {};
-        const c: Record<string, string> = {};
-
-        arr.forEach((dev: any) => {
-          b[dev.device] = 50;
-          c[dev.device] = "#ffffff";
-        });
-
-        setBrightness(b);
-        setColors(c);
-      });
-  }, []);
-
-  async function sendCommand(device: string, model: string, cmd: any) {
-    await fetch("/api/govee/control", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ device, model, cmd }),
-    });
-  }
-
-  // Debounce control signals
-  let debounceBrightness: NodeJS.Timeout;
-  let debounceColor: NodeJS.Timeout;
-
-  function sendBrightness(device: string, model: string, value: number) {
-    clearTimeout(debounceBrightness);
-    debounceBrightness = setTimeout(() => {
-      sendCommand(device, model, {
-        name: "brightness",
-        value: value,
-      });
-    }, 150);
-  }
-
-  function sendColor(device: string, model: string, hex: string) {
-    clearTimeout(debounceColor);
-    debounceColor = setTimeout(() => {
-      const rgb = parseInt(hex.replace("#", ""), 16);
-      sendCommand(device, model, {
-        name: "color",
-        value: {
-          r: (rgb >> 16) & 255,
-          g: (rgb >> 8) & 255,
-          b: rgb & 255,
-        },
-      });
-    }, 120);
-  }
-
-  // SABITX presets
-  const presets: Record<string, string> = {
-    OperatorWhite: "#ffffff",
-    SabitxRed: "#ff2a2a",
-    VaultBlue: "#0091ff",
-    QuantumPurple: "#8b00ff",
-    NightWarm: "#ffb86c",
-    ChillMint: "#00ffa3",
-    FocusWhite: "#f2f2ff",
-  };
+  const tiles = [
+    {
+      title: "Vault",
+      description: "Secure documents, exhibits, and case files.",
+      href: "https://vault.sabitx.com",
+      external: true,
+    },
+    {
+      title: "Store",
+      description: "Customer-facing ordering & pre-pay (coming online).",
+      href: "https://store.sabitx.com",
+      external: true,
+    },
+    {
+      title: "Operator Console",
+      description: "Lighting, automations, and internal tools.",
+      href: "/operator/lights",
+      external: false,
+    },
+    {
+      title: "Systems",
+      description: "SABITX automation & infrastructure.",
+      href: "https://systems.sabitx.com",
+      external: true,
+    },
+    {
+      title: "Mesh Library",
+      description: "Knowledge, references, and SABITX canon.",
+      href: "https://mesh.sabitx.com",
+      external: true,
+    },
+  ];
 
   return (
-    <div className="px-4 py-6 text-white bg-black min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">SABITX Operator</h1>
+    <main className="min-h-screen bg-black text-white flex flex-col">
+      <header className="px-6 pt-6 pb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-md border border-white/20 flex items-center justify-center text-xs font-semibold">
+            SABIT
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold tracking-wide">
+              SABITX OS
+            </h1>
+            <p className="text-xs text-zinc-400">
+              Portal • Identity • Control
+            </p>
+          </div>
+        </div>
+      </header>
 
-      <div className="space-y-6 pb-20">
-        {devices.map((dev) => {
-          const model = getModel(dev);
+      <section className="px-6 pb-6">
+        <h2 className="text-2xl font-semibold mb-2">
+          Choose your channel
+        </h2>
+        <p className="text-sm text-zinc-400 mb-6">
+          One identity. Multiple roles. This portal routes you into the
+          correct layer of SABITX: legal, operations, store, or automation.
+        </p>
 
-          return (
-            <div key={dev.device} className="p-4 bg-zinc-900 rounded-xl shadow">
-              <h2 className="text-lg font-semibold">{dev.deviceName}</h2>
-              <p className="text-sm text-zinc-400">Model: {model}</p>
-              <p className="text-xs text-zinc-500 break-all mb-2">{dev.device}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {tiles.map((tile) => {
+            const TileInner = (
+              <div className="h-full rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 hover:border-zinc-500 transition-colors flex flex-col justify-between">
+                <div>
+                  <h3 className="text-base font-semibold mb-1">
+                    {tile.title}
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    {tile.description}
+                  </p>
+                </div>
+                <div className="mt-4 text-xs text-zinc-500 flex items-center gap-1">
+                  <span>Enter</span>
+                  {tile.external && (
+                    <span className="text-[10px] uppercase tracking-wide">
+                      External
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
 
-              {/* ON/OFF */}
-              <div className="flex gap-2 mb-3">
-                <button
-                  onClick={() =>
-                    sendCommand(dev.device, model, {
-                      name: "turn",
-                      value: "on",
-                    })
-                  }
-                  className="px-3 py-1 bg-green-600 rounded-md"
+            if (tile.external) {
+              return (
+                <a
+                  key={tile.title}
+                  href={tile.href}
+                  target="_blank"
+                  rel="noreferrer"
                 >
-                  ON
-                </button>
+                  {TileInner}
+                </a>
+              );
+            }
 
-                <button
-                  onClick={() =>
-                    sendCommand(dev.device, model, {
-                      name: "turn",
-                      value: "off",
-                    })
-                  }
-                  className="px-3 py-1 bg-red-600 rounded-md"
-                >
-                  OFF
-                </button>
-              </div>
+            return (
+              <Link key={tile.title} href={tile.href}>
+                {TileInner}
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
-              {/* PRESETS */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {Object.entries(presets).map(([name, hex]) => (
-                  <button
-                    key={name}
-                    style={{ backgroundColor: hex }}
-                    className="w-8 h-8 rounded-full border border-white/20"
-                    onClick={() => {
-                      setColors((prev) => ({ ...prev, [dev.device]: hex }));
-                      sendColor(dev.device, model, hex);
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* BRIGHTNESS */}
-              <div className="mt-2 mb-4">
-                <input
-                  type="range"
-                  min="1"
-                  max="100"
-                  value={brightness[dev.device] ?? 50}
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value);
-                    setBrightness((prev) => ({ ...prev, [dev.device]: v }));
-                    sendBrightness(dev.device, model, v);
-                  }}
-                  className="w-full"
-                />
-                <p className="text-xs text-zinc-400">
-                  Brightness: {brightness[dev.device] ?? 50}%
-                </p>
-              </div>
-
-              {/* COLOR PICKER */}
-              <div className="mt-4">
-                <HexColorPicker
-                  color={colors[dev.device]}
-                  onChange={(hex) => {
-                    setColors((prev) => ({ ...prev, [dev.device]: hex }));
-                    sendColor(dev.device, model, hex);
-                  }}
-                />
-                <p className="text-xs text-zinc-400 mt-1">
-                  Color: {colors[dev.device]}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+      <footer className="mt-auto px-6 py-4 text-[10px] text-zinc-500 flex items-center justify-between border-t border-zinc-900">
+        <span>SABITX Portal • sabihsaleem.app</span>
+        <span>Operator • Vault • Store • Systems</span>
+      </footer>
+    </main>
   );
 }
